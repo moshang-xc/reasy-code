@@ -1,0 +1,26 @@
+{
+  "name": "reasy-code",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "dependencies": {
+    "axios": "^0.24.0",
+    "https": "^1.0.0",
+    "inquirer": "^8.2.0",
+    "request": "^2.88.2"
+  },
+  "bin": {
+    "code-cli": "./index.js"
+  },
+  "devDependencies": {
+    "axios": "^0.24.0",
+    "https": "^1.0.0",
+    "inquirer": "^8.2.0",
+    "request": "^2.88.2"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC"
+}
