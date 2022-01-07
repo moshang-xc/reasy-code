@@ -13,7 +13,7 @@
 ### Install
 
 ```
-npm install count-code -g
+npm install reasy-code -g
 ```
 
 
@@ -21,7 +21,7 @@ npm install count-code -g
 ### Usage
 
 ```
-code-cli
+reasy-code
 ```
 
 

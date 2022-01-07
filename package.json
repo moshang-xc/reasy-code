@@ -10,7 +10,7 @@
     "request": "^2.88.2"
   },
   "bin": {
-    "code-cli": "./index.js"
+    "reasy-code": "./index.js"
   },
   "devDependencies": {
     "axios": "^0.24.0",
