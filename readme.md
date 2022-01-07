@@ -6,7 +6,7 @@
 
 实现效果如图：
 
-![result](E:\learn\test\reasy-code\assets\result.png)
+![result](https://github.com/reasyTeam/reasy-code/blob/master/assets/result.png)
 
 
 
@@ -30,7 +30,7 @@ reasy-code
 
 代码路径：存放在gitlab上的项目代码路径
 
-![codePath](E:\learn\test\reasy-code\assets\codePath.png)
+![codePath](https://github.com/reasyTeam/reasy-code/blob/master/assets/codePath.png)
 
 
 
@@ -42,13 +42,13 @@ reasy-code
 
 项目名称：存放在gitlab上的项目名称
 
-![codeName](E:\learn\test\reasy-code\assets\codeName.png)
+![codeName](https://github.com/reasyTeam/reasy-code/blob/master/assets/codeName.png)
 
 
 
 分支名称：存放在gitlab上的项目分支的名称
 
-![codeBranch](E:\learn\test\reasy-code\assets\codeBranch.png)
+![codeBranch](https://github.com/reasyTeam/reasy-code/blob/master/assets/codeBranch.png)
 
 
 
@@ -56,5 +56,5 @@ reasy-code
 
 结束哈希值：此哈希值之前的代码提交统计，非必填
 
-![codeHash](E:\learn\test\reasy-code\assets\codeHash.png)
+![codeHash](https://github.com/reasyTeam/reasy-code/blob/master/assets/codeHash.png)
 
