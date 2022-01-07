@@ -36,7 +36,7 @@ reasy-code
 
 项目令牌：项目中的访问令牌
 
-![codeToken](E:\learn\test\reasy-code\assets\codeToken.png)
+![codeToken](https://github.com/reasyTeam/reasy-code/blob/master/assets/codeToken.png)
 
 
 
