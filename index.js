@@ -158,7 +158,7 @@ function countCode() {
 
     //获取5页提交记录
     let commitUrl;
-    for (let i = page; i <= page; i++) {
+    for (let i = page; i <= page + 5; i++) {
         commitUrl = url + "/" + id + "/repository/commits?per_page=" + pageCount + "&page=" + i + "&ref_name=" + branch;
         promisePageArr.push(axios.get(commitUrl + "&" + token));
     }
