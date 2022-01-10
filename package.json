@@ -1,5 +1,5 @@
 {
-  "name": "reasy-code",
+  "name": "@reasy-team/code",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -10,7 +10,7 @@
     "request": "^2.88.2"
   },
   "bin": {
-    "reasy-code": "./index.js"
+    "@reasy-team/code": "./test.js"
   },
   "devDependencies": {
     "axios": "^0.24.0",

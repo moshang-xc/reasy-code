@@ -13,7 +13,7 @@
 ### Install
 
 ```
-npm install reasy-code -g
+npm install @reasy-team/code -g
 ```
 
 
@@ -21,7 +21,7 @@ npm install reasy-code -g
 ### Usage
 
 ```
-reasy-code
+@reasy-team/code
 ```
 
 
