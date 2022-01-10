@@ -56,7 +56,6 @@ const prompt = [
         validate(value) {
             if (value) {
                 value = value.trim() + "/api/v4/projects";
-                console.log(value);
                 return axios.get(value).then(() => {
                     url = value;
                     return true;
@@ -75,7 +74,6 @@ const prompt = [
         validate(value) {
             if (value) {
                 value = "private_token=" + value.trim();
-                console.log(url + "/?" + value);
                 return axios.get(url + "/?" + value).then((response) => {
                     token = value;
                     //获取项目ID
@@ -98,7 +96,6 @@ const prompt = [
         name: "codeName",
         validate(value) {
             value = value.trim();
-            console.log(url + "/" + projects[value] + "/repository/branches?" + token);
             if (value) {
                 return axios.get(url + "/" + projects[value] + "/repository/branches?" + token).then((response) => {
                     id = projects[value];
@@ -120,7 +117,6 @@ const prompt = [
         name: "branch",
         validate(value) {
             value = value.trim();
-            console.log(url + "/" + id + "/repository/commits?ref_name=" + value + "&" + token);
             if (value) {
                 return axios.get(url + "/" + id + "/repository/commits?ref_name=" + value + "&" + token).then((response) => {
                     if (response.data.length > 0) {
