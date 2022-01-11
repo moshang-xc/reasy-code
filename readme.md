@@ -36,6 +36,12 @@ reasy-code
 
 项目令牌：项目中的访问令牌
 
+创建令牌
+
+![codeToken](https://github.com/reasyTeam/reasy-code/blob/master/assets/token.png)
+
+复制令牌
+
 ![codeToken](https://github.com/reasyTeam/reasy-code/blob/master/assets/codeToken.png)
 
 

@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 const init = require('./main.js');
 const { version } = require('./package.json')
 

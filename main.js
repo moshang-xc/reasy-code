@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+
 //TODO　gitlab网站开放的接口，请参考https://docs.gitlab.com/ee/api/
 
 const axios = require('axios');
@@ -71,17 +71,9 @@ const prompt = [
         filter,
         validate(value) {
             if (value) {
-                //请求gitlab网址上的项目中access token令牌
-                return axios.get(`${url}/?private_token=${value}`).then((response) => {
-                    token = `private_token=${value}`;
-                    //获取项目ID
-                    response.data.forEach(element => {
-                        projects[element.name] = element.id;
-                    });
-                    return true;
-                }).catch((err) => {
-                    return new Error(err);
-                })
+                page = 1;
+                token = `private_token=${value}`;
+                return getAllProjects(value);
             }
             return new Error('必填');
         }
@@ -95,7 +87,7 @@ const prompt = [
             if (value) {
                 //项目不存在，提示报错
                 if (!projects[value]) {
-                    return new Error('请确认输入的信息是否正确！');
+                    return new Error('您输入的项目名称不正确! 核实无误后请联系开发人员');
                 }
                 //请求gitlab网址上的具体项目
                 return axios.get(`${url}/${projects[value]}/repository/branches?${token}`).then((response) => {
@@ -151,21 +143,52 @@ const prompt = [
     },
 ];
 
+//空格过滤
 function filter(value) {
     return value.trim();
 }
 
-function countCode() {
-    let promisePageArr = [];
-    let promiseCountArr = [];
+//获取所有项目
+function getAllProjects(value) {
+    let hasData = true;
+    return getAllData(`${url}/?private_token=${value}`).then(axios.spread = (response) => {
+        page += STACK;
+        response.forEach((element) => {
+            //如果没有数据则不继续请求
+            if (element.data.length < PAGECOUNT) {
+                hasData = false;
+            }
+            //获取项目ID
+            element.data.forEach((item) => {
+                projects[item.name] = item.id;
+            })
+        })
+    }).then(() => {
+        if (hasData) {
+            return getAllProjects(value);
+        }
+        return true;
+    }).catch((err) => {
+        return new Error(err);
+    })
+}
 
+//一页最多获取100条记录,翻页获取全部数据
+function getAllData(url) {
+    let arr = [];
     //获取3页提交记录
     for (let i = page; i <= page + STACK; i++) {
         //遍历请求gitlab网址上的项目分支3页的数据
-        promisePageArr.push(axios.get(`${url}/${id}/repository/commits?per_page=${PAGECOUNT}&page=${i}&ref_name=${branch}&${token}`));
+        arr.push(axios.get(`${url}&per_page=${PAGECOUNT}&page=${i}&`));
     }
 
-    Promise.all(promisePageArr)
+    return Promise.all(arr);
+}
+
+function countCode() {
+    let promiseCountArr = [];
+
+    getAllData(`${url}/${id}/repository/commits?ref_name=${branch}&${token}`)
         .then(axios.spread = (arr) => {
             //获取每页的100条记录
             arr.forEach((element) => {
@@ -217,7 +240,9 @@ function countCode() {
             if (status != STATE.END) {
                 countCode();
             } else {
-                console.table(Object.values(count));
+                console.table(Object.values(count).sort((a, b) => {
+                    return b.Total - a.Total;
+                }));
             }
         })
 }
@@ -242,6 +267,7 @@ module.exports = function init(data) {
             startHash = answer.startHash;
             endHash = answer.endHash;
             console.log("请稍后，正在计算中...");
+            page = 1;
             countCode();
         });
     }
