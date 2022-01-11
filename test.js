@@ -2,7 +2,7 @@ const init = require('./index.js');
 const { version } = require('./package.json')
 
 //是否自定义输入
-const isCustom = true;
+const isCustom = false;
 
 const data = {
     url: "http://192.168.80.215:8929/api/v4/projects",
