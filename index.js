@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+//TODO　gitlab网站开放的接口，请参考https://docs.gitlab.com/ee/api/
 
 const axios = require('axios');
 
@@ -27,20 +28,18 @@ let status = STATE.INIT;
 
 //项目名称和项目ID的映射
 let projects = {},
-    G_Data = {
-        //项目ID
-        id: "",
-        //项目url
-        url: "",
-        //项目令牌
-        token: "",
-        //项目分支名称
-        branch: "",
-        //开始提交哈希值
-        startHash: "",
-        //结束提交哈希值
-        endHash: ""
-    }
+    //项目ID
+    id = "",
+    //项目url
+    url = "",
+    //项目令牌
+    token = "",
+    //项目分支名称
+    branch = "",
+    //开始提交哈希值
+    startHash = "",
+    //结束提交哈希值
+    endHash = ""
 
 
 let count = {};
@@ -50,14 +49,13 @@ const prompt = [
         type: "input",
         message: "请输入代码路径：",
         name: "url",
-        filter(value) {
-            return value.trim();
-        },
+        filter,
         validate(value) {
             if (value) {
+                //请求gitlab网址上的项目
                 value = `${value}/api/v4/projects`;
                 return axios.get(value).then(() => {
-                    G_Data.url = value;
+                    url = value;
                     return true;
                 }).catch((err) => {
                     return new Error(err);
@@ -70,13 +68,12 @@ const prompt = [
         type: "input",
         message: "请输入令牌：",
         name: "token",
-        filter(value) {
-            return value.trim();
-        },
+        filter,
         validate(value) {
             if (value) {
-                return axios.get(`${G_Data.url}/?private_token=${value}`).then((response) => {
-                    G_Data.token = `private_token=${value}`;
+                //请求gitlab网址上的项目中access token令牌
+                return axios.get(`${url}/?private_token=${value}`).then((response) => {
+                    token = `private_token=${value}`;
                     //获取项目ID
                     response.data.forEach(element => {
                         projects[element.name] = element.id;
@@ -93,21 +90,20 @@ const prompt = [
         type: "input",
         message: "请输入项目名称：",
         name: "codeName",
-        filter(value) {
-            return value.trim();
-        },
+        filter,
         validate(value) {
             if (value) {
                 //项目不存在，提示报错
                 if (!projects[value]) {
                     return new Error('请确认输入的信息是否正确！');
                 }
-                return axios.get(`${G_Data.url}/${projects[value]}/repository/branches?${G_Data.token}`).then((response) => {
-                    G_Data.id = projects[value];
+                //请求gitlab网址上的具体项目
+                return axios.get(`${url}/${projects[value]}/repository/branches?${token}`).then((response) => {
+                    id = projects[value];
                     //获取主线代码
                     response.data.forEach((item) => {
                         if (item.default) {
-                            G_Data.branch = item.name;
+                            branch = item.name;
                         }
                     })
                     return true;
@@ -122,18 +118,17 @@ const prompt = [
         type: "input",
         message: "请输入分支名称（默认统计主线代码，非必填）：",
         name: "branch",
-        filter(value) {
-            return value.trim();
-        },
+        filter,
         validate(value) {
             if (value) {
-                return axios.get(`${G_Data.url}/${G_Data.id}/repository/commits?ref_name=${value}&${G_Data.token}`).then((response) => {
+                //请求gitlab网址上的具体项目中的分支
+                return axios.get(`${url}/${id}/repository/commits?ref_name=${value}&${token}`).then((response) => {
                     if (response.data.length > 0) {
-                        G_Data.branch = value;
+                        branch = value;
                         return true;
                     }
 
-                    console.log(`\n分支不存在，代码统计为${G_Data.branch}分支`);
+                    console.log(`\n分支不存在，代码统计为${branch}分支`);
                     return true;
                 }).catch((err) => {
                     return new Error(err);
@@ -146,19 +141,19 @@ const prompt = [
         type: "input",
         message: "起始哈希值（开始统计的提交commits，非必填）：",
         name: "startHash",
-        filter(value) {
-            return value.trim();
-        },
+        filter
     },
     {
         type: "input",
         message: "结束哈希值（结束统计的提交commits，非必填）：",
         name: "endHash",
-        filter(value) {
-            return value.trim();
-        },
+        filter
     },
 ];
+
+function filter(value) {
+    return value.trim();
+}
 
 function countCode() {
     let promisePageArr = [];
@@ -166,7 +161,8 @@ function countCode() {
 
     //获取3页提交记录
     for (let i = page; i <= page + STACK; i++) {
-        promisePageArr.push(axios.get(`${G_Data.url}/${G_Data.id}/repository/commits?per_page=${PAGECOUNT}&page=${i}&ref_name=${G_Data.branch}&${G_Data.token}`));
+        //遍历请求gitlab网址上的项目分支3页的数据
+        promisePageArr.push(axios.get(`${url}/${id}/repository/commits?per_page=${PAGECOUNT}&page=${i}&ref_name=${branch}&${token}`));
     }
 
     Promise.all(promisePageArr)
@@ -176,7 +172,8 @@ function countCode() {
                 page += STACK;
 
                 element.data.forEach((item) => {
-                    promiseCountArr.push(axios.get(`${G_Data.url}/${G_Data.id}/repository/commits/${item.id}?${G_Data.token}`));
+                    //遍历请求项目分支每页中提交记录id获取具体的提交信息
+                    promiseCountArr.push(axios.get(`${url}/${id}/repository/commits/${item.id}?${token}`));
                 })
             })
         }).then(() => {
@@ -185,8 +182,8 @@ function countCode() {
             for (let i = 0; i < countArr.length; i++) {
                 let item = countArr[i].data;
                 //如果输入结束哈希并且结束哈希不等于id，则不计算代码量，否则计算代码量
-                if (G_Data.endHash) {
-                    if (item.id == G_Data.endHash) {
+                if (endHash) {
+                    if (item.id == endHash) {
                         status = STATE.COUNTING;
                     }
                 } else {
@@ -196,18 +193,18 @@ function countCode() {
                 if (status == STATE.COUNTING) {
                     if (!count[item.author_name]) {
                         count[item.author_name] = {
-                            "名称": item.author_name,
-                            "总代码量": 0,
-                            "增加代码量": 0,
-                            "删除代码量": 0
+                            "Name": item.author_name,
+                            "Total": 0,
+                            "Add": 0,
+                            "Delete": 0
                         };
                     }
-                    count[item.author_name]["总代码量"] += item.stats.total;
-                    count[item.author_name]["增加代码量"] += item.stats.additions;
-                    count[item.author_name]["删除代码量"] += item.stats.deletions;
+                    count[item.author_name]["Total"] += item.stats.total;
+                    count[item.author_name]["Add"] += item.stats.additions;
+                    count[item.author_name]["Delete"] += item.stats.deletions;
                 }
                 //如果到达结束提交哈希值，结束计算
-                if (item.id == G_Data.startHash) {
+                if (item.id == startHash) {
                     status = STATE.END;
                     break;
                 }
@@ -227,14 +224,13 @@ function countCode() {
 
 module.exports = function init(data) {
     if (data) {
-        // ({ url, token, codeName, branch, startHash, endHash } = data);
-        G_Data = Object.assign(G_Data, data);
+        ({ url, token, codeName, branch, startHash, endHash } = data);
         //获取项目ID
-        G_Data.token = `private_token=${G_Data.token}`;
-        axios.get(`${G_Data.url}/?${G_Data.token}`).then((response) => {
+        token = `private_token=${token}`;
+        axios.get(`${url}/?${token}`).then((response) => {
             response.data.forEach(element => {
-                if (element.name == G_Data.codeName) {
-                    G_Data.id = element.id;
+                if (element.name == codeName) {
+                    id = element.id;
                 }
             });
             countCode();
@@ -243,8 +239,8 @@ module.exports = function init(data) {
         console.log("请输入以下配置：");
 
         inquirer.prompt(prompt).then((answer) => {
-            G_Data.startHash = answer.startHash;
-            G_Data.endHash = answer.endHash;
+            startHash = answer.startHash;
+            endHash = answer.endHash;
             console.log("请稍后，正在计算中...");
             countCode();
         });
