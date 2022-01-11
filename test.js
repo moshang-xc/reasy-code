@@ -1,4 +1,4 @@
-const init = require('./index.js');
+const init = require('./main.js');
 const { version } = require('./package.json')
 
 //是否自定义输入

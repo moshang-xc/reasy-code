@@ -10,7 +10,7 @@
 
 
 
-### Install
+### 安装
 
 ```
 npm install @reasy-team/code -g
@@ -18,10 +18,10 @@ npm install @reasy-team/code -g
 
 
 
-### Usage
+### 使用
 
 ```
-@reasy-team/code
+reasy-code
 ```
 
 
