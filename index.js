@@ -4,9 +4,6 @@ const axios = require('axios');
 
 const inquirer = require("inquirer");
 
-// const Grid = require("console-grid");
-// const grid = new Grid();
-
 //数据从第1页开始获取
 let page = 1;
 
@@ -19,19 +16,17 @@ let hasData = true;
 //是否开始计算代码量
 const STATE = {
     //0 初始状态
-    init: 0,
+    INIT: 0,
     //1 计算代码量状态
-    start: 1,
+    COUNTING: 1,
     //2 介绍计算代码量
-    end: 2
+    END: 2
 }
 
-let status = STATE["init"];
+let status = STATE.INIT;
 
 //项目名称和项目ID的映射
-let projects = {},
-    //项目分支
-    branchsArr = [];
+let projects = {};
 
 //项目ID
 let id,
@@ -54,13 +49,14 @@ const prompt = [
         message: "请输入代码路径：",
         name: "url",
         validate(value) {
+            value = value.trim();
             if (value) {
-                value = value.trim() + "/api/v4/projects";
+                value = value + "/api/v4/projects";
                 return axios.get(value).then(() => {
                     url = value;
                     return true;
-                }, () => {
-                    return new Error('请确认输入的信息是否正确！')
+                }, (err) => {
+                    return new Error(err)
                 })
             } else {
                 return new Error('必填')
@@ -72,8 +68,9 @@ const prompt = [
         message: "请输入令牌：",
         name: "token",
         validate(value) {
+            value = value.trim();
             if (value) {
-                value = "private_token=" + value.trim();
+                value = "private_token=" + value;
                 return axios.get(url + "/?" + value).then((response) => {
                     token = value;
                     //获取项目ID
@@ -82,8 +79,8 @@ const prompt = [
                         projects[element.name] = element.id;
                     });
                     return true;
-                }, () => {
-                    return new Error('请确认输入的信息是否正确！')
+                }, (err) => {
+                    return new Error(err)
                 })
             } else {
                 return new Error('必填')
@@ -97,15 +94,21 @@ const prompt = [
         validate(value) {
             value = value.trim();
             if (value) {
-                return axios.get(url + "/" + projects[value] + "/repository/branches?" + token).then((response) => {
-                    id = projects[value];
-                    response.data.forEach((item) => {
-                        branchsArr.push(item.name);
+                if (projects[value]) {
+                    return axios.get(url + "/" + projects[value] + "/repository/branches?" + token).then((response) => {
+                        id = projects[value];
+                        response.data.forEach((item) => {
+                            if (item.default) {
+                                branch = item.name;
+                            }
+                        })
+                        return true;
+                    }, (err) => {
+                        return new Error(err);
                     })
-                    return true;
-                }, () => {
-                    return new Error('请确认输入的信息是否正确！')
-                })
+                } else {
+                    return new Error('请确认输入的信息是否正确！');
+                }
             } else {
                 return new Error('必填')
             }
@@ -113,7 +116,7 @@ const prompt = [
     },
     {
         type: "input",
-        message: "请输入分支名称：",
+        message: "请输入分支名称（默认统计主线代码，非必填）：",
         name: "branch",
         validate(value) {
             value = value.trim();
@@ -123,27 +126,29 @@ const prompt = [
                         branch = value;
                         return true;
                     }
-                    // return new Error('请确认输入的信息是否正确！')
-                    branch = branchsArr['master'] != -1 ? 'master' : branchsArr[0];
                     console.log('\n');
                     console.log('分支不存在，代码统计为' + branch + '分支');
                     return true;
-                }, () => {
-                    return new Error('请确认输入的信息是否正确！')
+                }, (err) => {
+                    return new Error(err)
                 })
             } else {
-                return new Error('必填')
+                return axios.get(url + "/" + id + "/repository/commits?ref_name=" + branch + "&" + token).then(() => {
+                    return true;
+                }, (err) => {
+                    return new Error(err)
+                })
             }
         }
     },
     {
         type: "input",
-        message: "请输入起始哈希值（哈希值之后的提交，非必填）：",
+        message: "起始哈希值（开始统计的提交commits，非必填）：",
         name: "startHash"
     },
     {
         type: "input",
-        message: "请输入结束哈希值（哈希值之前的提交，非必填）：",
+        message: "结束哈希值（结束统计的提交commits，非必填）：",
         name: "endHash"
     },
 ];
@@ -170,53 +175,52 @@ function countCode() {
                     let itemUrl = url + "/" + id + "/repository/commits/" + item.id;
                     promiseCountArr.push(axios.get(itemUrl + "?" + token));
                 })
-
-                //如果某一页少于100条，则后续没有数据记录
-                if (element.data.length < pageCount) {
-                    hasData = false;
-                }
             })
         }).then(() => {
-            Promise.all(promiseCountArr)
-                .then(axios.spread = (countArr) => {
-                    for (let i = 0; i < countArr.length; i++) {
-                        item = countArr[i].data;
+            return Promise.all(promiseCountArr)
+        }).then(axios.spread = (countArr) => {
+            for (let i = 0; i < countArr.length; i++) {
+                item = countArr[i].data;
 
-                        //如果输入结束哈希并且结束哈希不等于id，则不计算代码量，否则计算代码量
-                        if (endHash) {
-                            if (item.id == endHash) {
-                                status = STATE["start"];
-                            }
-                        } else {
-                            status = STATE["start"];
-                        }
-
-                        if (status == STATE["start"]) {
-                            if (!count[item.author_name]) {
-                                count[item.author_name] = {
-                                    "名称": item.author_name,
-                                    "总代码量": 0,
-                                    "增加代码量": 0,
-                                    "删除代码量": 0
-                                };
-                            }
-                            count[item.author_name]["总代码量"] += item.stats.total;
-                            count[item.author_name]["增加代码量"] += item.stats.additions;
-                            count[item.author_name]["删除代码量"] += item.stats.deletions;
-                        }
-                        if (item.id == startHash) {
-                            status = STATE["end"];
-                            break;
-                        }
+                //如果输入结束哈希并且结束哈希不等于id，则不计算代码量，否则计算代码量
+                if (endHash) {
+                    if (item.id == endHash) {
+                        status = STATE.COUNTING;
                     }
-                }).then(() => {
-                    if (hasData && status != STATE["end"]) {
-                        countCode();
-                    } else {
-                        console.table(Object.values(count));
+                } else {
+                    status = STATE.COUNTING;
+                }
 
+                if (status == STATE.COUNTING) {
+                    if (!count[item.author_name]) {
+                        count[item.author_name] = {
+                            "名称": item.author_name,
+                            "总代码量": 0,
+                            "增加代码量": 0,
+                            "删除代码量": 0
+                        };
                     }
-                })
+                    count[item.author_name]["总代码量"] += item.stats.total;
+                    count[item.author_name]["增加代码量"] += item.stats.additions;
+                    count[item.author_name]["删除代码量"] += item.stats.deletions;
+                }
+                //如果到达结束提交哈希值，结束计算
+                if (item.id == startHash) {
+                    status = STATE.END;
+                    break;
+                }
+            }
+            //如果没有值，结束计算
+            if (countArr.length < 5 * pageCount) {
+                status = STATE.END;
+            }
+        }).then(() => {
+            if (hasData && status != STATE.END) {
+                countCode();
+            } else {
+                console.table(Object.values(count));
+
+            }
         })
 }
 
@@ -245,7 +249,6 @@ module.exports = function init(data) {
         });
     }
 };
-
 
 
 
