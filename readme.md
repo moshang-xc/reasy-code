@@ -26,7 +26,7 @@ reasy-code
 
 
 
-### Configuration
+### 参数说明
 
 代码路径：存放在gitlab上的项目代码路径
 

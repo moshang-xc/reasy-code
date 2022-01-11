@@ -10,7 +10,7 @@
     "request": "^2.88.2"
   },
   "bin": {
-    "@reasy-team/code": "./test.js"
+    "reasy-code": "./test.js"
   },
   "devDependencies": {
     "axios": "^0.24.0",
