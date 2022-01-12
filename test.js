@@ -8,7 +8,7 @@ const data = {
     url: "http://192.168.80.215:8929/api/v4/projects",
     token: "8sx97pqLQjxR4BU6tmpH",
     codeName: "security-system-admin",
-    branch: "develop_web",
+    branch: "",
     startHash: "",
     endHash: ""
 }
